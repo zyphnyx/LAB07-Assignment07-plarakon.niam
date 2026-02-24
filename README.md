@@ -8,6 +8,20 @@
 
 ให้นักศึกษาเขียนไฟล์ `compose.yaml` เพื่อตั้งค่าระบบที่มีการทำงานร่วมกันของ 4 บริการ (Services) ดังนี้:
 
+### 📂 โครงสร้างโฟลเดอร์ (File Tree Structure)
+```txt
+assignment-07/
+├── compose.yaml          # ไฟล์หลักสำหรับควบคุม Services ทั้งหมด
+├── .env                  # ไฟล์เก็บตัวแปร (Username, Ports, DB Name)
+├── my-nginx.conf         # ไฟล์ตั้งค่า Nginx (ใช้ทำ Docker Configs)
+├── .db_root.txt          # ไฟล์ลับเก็บรหัสผ่าน Root MySQL (Docker Secrets)
+├── .db_pass.txt          # ไฟล์ลับเก็บรหัสผ่าน User MySQL (Docker Secrets)
+├── seed-data.sql         # ไฟล์ SQL สำหรับ Import ข้อมูลนักศึกษาลงใน phpMyAdmin
+├── app/                  # โฟลเดอร์สำหรับทำ Bind Mount กับ Backend
+│   └── index.php         # ไฟล์ทดสอบการทำงานของ PHP
+└── README.md             # คู่มืออธิบายการติดตั้งและภาพผลลัพธ์
+```
+
 ### 1. รายละเอียดบริการ (Services)
 *   **db-server:** ใช้ Image `mysql:8.0` (ฐานข้อมูลหลัก)
 *   **backend-api:** ใช้ Image `php:8.2-fpm` (ส่วนประมวลผล)
