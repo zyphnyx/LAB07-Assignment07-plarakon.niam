@@ -9,7 +9,7 @@ services:
     container_name: ${MY_USERNAME}-db # ใช้ตัวแปรจาก .env เพื่อกำหนดชื่อคอนเทนเนอร์
     restart: always
     environment:
-      MARIADB_DATABASE: my_app_db
+      MARIADB_DATABASE: ${DB_NAME}
       MARIADB_USER: app_user
       MARIADB_ROOT_PASSWORD_FILE: /run/secrets/????????? # ใช้ Secret
       MARIADB_PASSWORD_FILE: ????????????????     # ใช้ Secret
@@ -39,7 +39,7 @@ services:
     container_name: ${MY_USERNAME}-web # ใช้ตัวแปรจาก .env เพื่อกำหนดชื่อคอนเทนเนอร์
     restart: always
     ports:
-      - "8000:80"
+      - "${HTTP_PORT}:80"
     volumes:
       - ./???:/var/www/html # เชื่อมโฟลเดอร์ที่มีไฟล์ index.php เข้ากับโฟลเดอร์ในคอนเทนเนอร์ 
     configs:
@@ -60,7 +60,7 @@ services:
       PMA_HOST: db-server # ชี้ไปที่ชื่อบริการของ DB ใน Docker Compose
       PMA_PASSWORD_FILE: /run/secrets/???????????????? # ใช้ Secret ในการ Login
     ports:
-      - "8000:80"
+      - "${PMA_PORT}:80"
     networks:
       - ???????????-zone # อยู่ในโซนเดียวกับ DB เพื่อให้ติดต่อกันได้
     depends_on:
