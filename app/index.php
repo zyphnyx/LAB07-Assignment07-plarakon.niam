@@ -1,33 +1,45 @@
 <?php
+// เปิดระบบแสดง Error
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
 function readSecret($secretName) {
     $path = "/run/secrets/" . $secretName;
-    return file_exists($path) ? trim(file_get_contents($path)) : null;
+    if (!file_exists($path)) {
+        throw new Exception("ไม่พบไฟล์ Secret: " . $path);
+    }
+    return trim(file_get_contents($path));
 }
 
 $host = 'db-server';
-$user = 'app_user';
-$pass = readSecret('db_user_pass');
-$db   = 'my_app_db';
+$user = 'event_user';
+$pass = readSecret('db_user_pass'); // ⚠️ แก้ไขให้ดึงไฟล์รหัสผ่านของ user
+$db   = 'event_db';
 
-$conn = new mysqli($host, $user, $pass, $db);
-
-if ($conn->connect_error) {
-    die("<div class='alert alert-danger'>❌ Connection failed: " . $conn->connect_error . "</div>");
+try {
+    // รวมการเชื่อมต่อไว้ใน try...catch เพื่อดักจับ Error
+    $conn = new mysqli($host, $user, $pass, $db);
+    
+    // ดึงข้อมูลและเรียงลำดับ ID จากน้อยไปมาก
+    $result = $conn->query("SELECT * FROM students ORDER BY id ASC");
+    if (!$result) {
+        throw new Exception($conn->error);
+    }
+} catch (Exception $e) {
+    die("<div style='padding:20px; background:#f8d7da; color:#721c24; border-radius:10px; font-family:sans-serif;'>
+            ❌ <b>System Error:</b> " . $e->getMessage() . "
+         </div>");
 }
-
-// เปลี่ยนเป็น ORDER BY id ASC (น้อยไปมาก)
-$result = $conn->query("SELECT * FROM students ORDER BY id ASC");
 ?>
-
 <!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Modern Student Dashboard</title>
-    <link href="https://cdn.jsdelivr.net" rel="stylesheet">
-    <link href="https://fonts.googleapis.com" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&family=Sarabun:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     
     <style>
         :root {
@@ -51,6 +63,7 @@ $result = $conn->query("SELECT * FROM students ORDER BY id ASC");
             backdrop-filter: blur(10px);
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
             overflow: hidden;
+            margin-top: 50px;
         }
 
         .header-section {
@@ -94,7 +107,7 @@ $result = $conn->query("SELECT * FROM students ORDER BY id ASC");
         }
 
         .bg-submitted { background: #dcfce7; color: #166534; }
-        .bg-progress { background: #fef9c3; color: #854d0e; }
+        .bg-inprogress { background: #fef9c3; color: #854d0e; }
         .bg-pending { background: #f1f5f9; color: #475569; }
 
         .time-display {
@@ -148,19 +161,18 @@ $result = $conn->query("SELECT * FROM students ORDER BY id ASC");
                         <tbody>
                             <?php while($row = $result->fetch_assoc()): 
                                 $statusSlug = strtolower(str_replace(' ', '', $row['status']));
-                                // จัดรูปแบบวันที่ไทย
                                 $date = date("d/m/Y H:i:s", strtotime($row['submitted_at']));
                             ?>
                             <tr>
                                 <td class="fw-bold text-primary"><?= sprintf("%02d", $row['id']) ?></td>
-                                <td><span class="fw-semibold text-dark"><?= $row['student_id'] ?></span></td>
-                                <td><?= $row['full_name'] ?></td>
-                                <td><span class="user-code">@<?= $row['username'] ?></span></td>
-                                <td><?= $row['email'] ?></td>
+                                <td><span class="fw-semibold text-dark"><?= htmlspecialchars($row['student_id']) ?></span></td>
+                                <td><?= htmlspecialchars($row['full_name']) ?></td>
+                                <td><span class="user-code">@<?= htmlspecialchars($row['username']) ?></span></td>
+                                <td><?= htmlspecialchars($row['email']) ?></td>
                                 <td>
                                     <span class="badge-custom bg-<?= $statusSlug ?>">
                                         <i class="bi bi-circle-fill" style="font-size: 6px;"></i>
-                                        <?= $row['status'] ?>
+                                        <?= htmlspecialchars($row['status']) ?>
                                     </span>
                                 </td>
                                 <td class="time-display">
@@ -172,7 +184,7 @@ $result = $conn->query("SELECT * FROM students ORDER BY id ASC");
                     </table>
                 </div>
                 <div class="card-footer bg-white border-0 p-4 text-center">
-                    <small class="text-muted">Database Engine: MariaDB 10.6 | Environment: Docker Compose v2</small>
+                    <small class="text-muted">Database Engine: MySQL 8.0 | Environment: Docker Compose v2</small>
                 </div>
             </div>
         </div>
